@@ -1,7 +1,3 @@
-/* eslint-disable camelcase */
-
-exports.shorthands = undefined;
-
 exports.up = (pgm) => {
     pgm.createTable('playlist_song_activities', {
         id: {
@@ -9,28 +5,33 @@ exports.up = (pgm) => {
             primaryKey: true,
         },
         playlist_id: {
-            type: 'VARCHAR(50)',
-            notNull: false,
+            type: 'VARCHAR(25)',
+            notNull: true,
+            references: 'playlists(id)',
+            onDelete: 'cascade',
         },
         song_id: {
-            type: 'VARCHAR(50)',
-            notNull: true,
+            type: 'VARCHAR(21)',
+            references: 'songs(id)',
+            onDelete: 'set null',
+            default: null,
         },
         user_id: {
-            type: 'VARCHAR(50)',
-            notNull: true,
+            type: 'VARCHAR(21)',
+            references: 'users(id)',
+            onDelete: 'set null',
+            default: null,
         },
         action: {
             type: 'VARCHAR(50)',
             notNull: true,
         },
         time: {
-            type: 'VARCHAR(50)',
+            type: 'TIMESTAMPTZ',
             notNull: true,
+            default: pgm.func('current_timestamp'),
         },
     });
-
-    pgm.addConstraint('playlist_song_activities', 'fk_playlist_song_activities.playlist_id_playlists.id', 'FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE');
 };
 
 exports.down = (pgm) => {
