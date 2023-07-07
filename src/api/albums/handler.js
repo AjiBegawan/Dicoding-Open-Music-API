@@ -18,22 +18,18 @@ class AlbumsHandler {
     const response = h.response({
       status: 'success',
       message: 'Album berhasil ditambahkan',
-      data: {
-        albumId,
-      },
+      data: { albumId },
     });
+
     response.code(201);
     return response;
-
   }
 
   async getAlbumsHandler() {
     const albums = await this._service.getAlbums();
     return {
       status: 'success',
-      data: {
-        albums,
-      },
+      data: { albums },
     };
   }
 
