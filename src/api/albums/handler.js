@@ -13,7 +13,7 @@ class AlbumsHandler {
     this._validator.validateAlbumPayload(request.payload);
     const { name, year } = request.payload;
 
-    const albumId = await this._service.addAlbum({ name, year });
+    const albumId = await this._service.addAlbum({ name, year, cover_url: null });
 
     const response = h.response({
       status: 'success',
@@ -21,6 +21,26 @@ class AlbumsHandler {
       data: { albumId },
     });
 
+    response.code(201);
+    return response;
+  };
+
+  async postAlbumCoverHandler(request, h) {
+    const { cover } = request.payload;
+    const { id } = request.params;
+
+    this._validator.validateImageHeaders(cover.hapi.headers);
+
+    const filename = await this._service.writeFile(cover, cover.hapi);
+
+    const fileLocation = `http://${process.env.HOST}:${process.env.PORT}/albums/cover/images/${filename}`
+
+    const cover_url = await this._service.addCoverUrl(id, fileLocation)
+
+    const response = h.response({
+      status: 'success',
+      message: 'Sampul berhasil diunggah'
+    });
     response.code(201);
     return response;
   }
