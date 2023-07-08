@@ -3,13 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/InvariantError');
-const { mapDBToModelAlbums } = require('../../utils');
 const NotFoundError = require('../../exceptions/NotFoundError');
+const { mapDBToModelAlbums } = require('../../utils');
 
 class AlbumsService {
-  constructor(folder) {
+  constructor(folder, cacheService) {
     this._pool = new Pool();
     this._folder = folder;
+    this._cacheService = cacheService;
 
     if (!fs.existsSync(folder)) {
       fs.mkdirSync(folder, { recursive: true });
@@ -108,6 +109,65 @@ class AlbumsService {
     }
 
     return result.rows[0].id;
+  }
+
+  async isAlbumLiked(id, userId) {
+    await this.getAlbumById(id);
+
+    const result = await this._pool.query({
+      text: 'SELECT id FROM album_likers WHERE album_id = $1 AND user_id = $2',
+      values: [id, userId],
+    });
+    return !!result.rowCount;
+  }
+
+
+  async likeAlbum(albumId, userId) {
+    const id = `album-likers-${nanoid(16)}`;
+
+    const result = await this._pool.query({
+      text: `INSERT INTO album_likers (id, album_id, user_id)
+        VALUES ($1, $2, $3) RETURNING id`,
+      values: [id, albumId, userId],
+    });
+
+    if (!result.rowCount) {
+      throw new NotFoundError('Album not found');
+    }
+
+    await this._cacheService.delete(`album-likes:${albumId}`);
+    return result.rows[0].id;
+  }
+
+
+  async unlikeAlbum(id, userId) {
+    const result = await this._pool.query({
+      text: 'DELETE FROM album_likers WHERE album_id = $1 AND user_id = $2 RETURNING id',
+      values: [id, userId],
+    });
+
+    if (!result.rowCount) {
+      throw new NotFoundError('Album not found');
+    }
+
+    await this._cacheService.delete(`album-likes:${id}`);
+  }
+
+
+  async getAlbumLikes(id) {
+    await this.getAlbumById(id);
+    try {
+      const result = await this._cacheService.get(`album-likes:${id}`);
+      return [parseInt(result, 10), true];
+    } catch (error) {
+      const result = await this._pool.query({
+        text: 'SELECT id FROM album_likers WHERE album_id = $1',
+        values: [id],
+      });
+
+      await this._cacheService.set(`album-likes:${id}`, result.rowCount);
+      return [result.rowCount, false];
+    }
   }
 }
 

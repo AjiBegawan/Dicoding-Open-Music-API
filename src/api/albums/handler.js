@@ -1,4 +1,4 @@
-const ClientError = require('../../exceptions/ClientError');
+const InvariantError = require('../../exceptions/InvariantError')
 const autoBind = require('auto-bind');
 
 class AlbumsHandler {
@@ -86,6 +86,54 @@ class AlbumsHandler {
       message: 'Lagu berhasil dihapus',
     };
 
+  }
+
+  async postLikeAlbumHandler(request, h) {
+    const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    if (await this._service.isAlbumLiked(id, credentialId)) {
+      throw new InvariantError('You have liked this album before');
+    }
+
+    await this._service.likeAlbum(id, credentialId);
+
+    return h.response({
+      status: 'success',
+      message: 'Album successfully liked.',
+    }).code(201);
+  }
+
+  async deleteLikeAlbumHandler(request, h) {
+    const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    if (!(await this._service.isAlbumLiked(id, credentialId))) {
+      throw new InvariantError('You have not liked this album before');
+    }
+
+    await this._service.unlikeAlbum(id, credentialId);
+
+    return h.response({
+      status: 'success',
+      message: 'Album successfully unliked.',
+    });
+  }
+
+  async getAlbumLikesHandler(request, h) {
+    const { id } = request.params;
+    const [likes, cache] = await this._service.getAlbumLikes(id);
+
+    const res = h.response({
+      status: 'success',
+      data: { likes },
+    });
+
+    if (cache) {
+      res.header('X-Data-Source', 'cache');
+    }
+
+    return res;
   }
 }
 
