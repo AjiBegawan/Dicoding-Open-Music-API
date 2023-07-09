@@ -39,11 +39,14 @@ class AlbumsHandler {
 
     return {
       status: 'success',
-      data: {
-        album,
-      },
+      data: { album },
     };
+  }
 
+  async getAlbumCoverUrlHandler() {
+    return {
+      status: 'success',
+    };
   }
 
   async putAlbumByIdHandler(request, h) {

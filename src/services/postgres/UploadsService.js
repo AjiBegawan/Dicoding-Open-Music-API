@@ -33,7 +33,6 @@ class UploadsService {
             text: 'UPDATE albums SET cover_url = $2 WHERE id = $1 RETURNING id',
             values: [id, cover_url],
         };
-        // console.log(query.values);
         const result = await this._pool.query(query);
 
         if (!result.rows[0].id) {
