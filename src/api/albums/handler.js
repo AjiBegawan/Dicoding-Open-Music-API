@@ -46,6 +46,7 @@ class AlbumsHandler {
   async getAlbumCoverUrlHandler() {
     return {
       status: 'success',
+      message: 'Album Cover existed'
     };
   }
 
