@@ -12,6 +12,12 @@ const albums = require('./api/albums');
 const AlbumsService = require('./services/postgres/AlbumsService');
 const AlbumsValidator = require('./validator/albums');
 
+// Uploads
+const uploads = require('./api/uploads');
+const UploadsService = require('./services/postgres/UploadsService');
+const UploadsValidator = require('./validator/uploads');
+
+
 // songs
 const songs = require('./api/songs');
 const SongsService = require('./services/postgres/SongsService');
@@ -52,7 +58,8 @@ const ClientError = require('./exceptions/ClientError');
 const init = async () => {
   const cacheService = new CacheService();
   const songsService = new SongsService();
-  const albumsService = new AlbumsService(path.resolve(__dirname, 'api/albums/cover/images'), cacheService);
+  const albumsService = new AlbumsService(cacheService);
+  const uploadsService = new UploadsService(path.resolve(__dirname, 'api/albums/cover/images'));
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
   const collaborationsService = new CollaborationsService(cacheService);
@@ -107,6 +114,13 @@ const init = async () => {
       options: {
         service: albumsService,
         validator: AlbumsValidator,
+      },
+    },
+    {
+      plugin: uploads,
+      options: {
+        service: uploadsService,
+        validator: UploadsValidator,
       },
     },
     {
