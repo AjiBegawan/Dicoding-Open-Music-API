@@ -33,6 +33,42 @@ class SongsService {
     return rows;
   }
 
+  async getSongByTitleOrPerformer(title, performer) {
+    const titlePersen = '%' + title + '%'
+    const performerPersen = '%' + performer + '%'
+
+    if (title && performer) {
+      const query = {
+        text: 'SELECT id, title, performer FROM songs WHERE title ILIKE $1 AND performer ILIKE $2',
+        values: [titlePersen, performerPersen],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rowCount) {
+        throw new NotFoundError('Lagu tidak ditemukan1');
+      }
+
+      return result.rows;
+    }
+    else {
+      const query = {
+        text: 'SELECT id, title, performer FROM songs WHERE title ILIKE $1 OR performer ILIKE $2',
+        values: [titlePersen, performerPersen],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rowCount) {
+        throw new NotFoundError('Lagu tidak ditemukan2');
+      }
+
+      return result.rows;
+    }
+
+
+  }
+
   async getSongById(id) {
     const query = {
       text: 'SELECT * FROM songs WHERE id = $1',
